@@ -1,0 +1,326 @@
+<html>
+<head>
+    <title>Jogo de RPG</title>
+    <style>
+        /* Estilos CSS para formatar a página */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #333; /* Cor de fundo escura (modo noturno padrão) */
+            color: #fff; /* Cor do texto clara */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            width: 300px;
+            margin-bottom: 10px;
+        }
+        .label {
+            font-weight: bold;
+        }
+        .input {
+            width: 50px;
+        }
+        .button {
+            width: 70px;
+        }
+        .close-button {
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        /* Modo noturno */
+        .dark-mode {
+            background-color: #333; /* Cor de fundo escura */
+            color: #fff; /* Cor do texto clara */
+        }
+        /* Estilos adicionais para os botões e invocações */
+        #addSummon {
+            margin-top: 20px; /* Adicionado espaço acima do botão */
+        }
+        #summons {
+            margin-top: 20px; /* Adicionado espaço acima do contêiner de invocações */
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .summon-container {
+            display: flex;
+            flex-direction: column;
+            width: 300px;
+            margin-right: 20px; /* Espaço à direita das invocações */
+            margin-bottom: 20px; /* Espaço abaixo das invocações */
+        }
+        .right-panel {
+            flex: 1;
+            margin-left: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Jogo de RPG</h1>
+        
+        <!-- Gerenciador do personagem principal -->
+        <div class="header">
+            <span class="label">Turnos:</span>
+            <button id="decrementTurns" class="button">-</button>
+            <span id="turns">0</span>
+            <button id="incrementTurns" class="button">+</button>
+        </div>
+        
+        <div class="header">
+            <span class="label">Nome do Personagem:</span>
+            <input id="characterName" type="text" placeholder="Nome do Personagem">
+        </div>
+        
+        <div class="header">
+            <span class="label">Vida Máxima:</span>
+            <input id="maxLife" class="input" type="number" value="15000">
+        </div>
+        
+        <div class="header">
+            <span class="label">Vida Atual:</span>
+            <span id="currentLife">15000</span>
+        </div>
+        
+        <div class="header">
+            <span class="label">Dano Recebido:</span>
+            <input id="damage" class="input" type="number">
+            <button id="confirmDamage" class="button">Confirmar</button>
+        </div>
+        
+        <div class="header">
+            <span class="label">Cura Recebida:</span>
+            <input id="healing" class="input" type="number">
+            <button id="confirmHealing" class="button">Confirmar</button>
+        </div>
+        
+        <div class="header">
+            <span class="label">Mana Máxima:</span>
+            <input id="maxMana" class="input" type="number" value="400">
+        </div>
+        
+        <div class="header">
+            <span class="label">Mana Atual:</span>
+            <span id="currentMana">400</span>
+        </div>
+        
+        <div class="header">
+            <span class="label">Gasto de Mana:</span>
+            <input id="manaSpent" class="input" type="number">
+            <button id="confirmManaSpent" class="button">Confirmar</button>
+        </div>
+        
+        <div class="header">
+            <span class="label">Regen de Mana:</span>
+            <input id="manaRegen" class="input" type="number">
+            <button id="confirmManaRegen" class="button">Confirmar</button>
+        </div>
+        
+        <button id="addSummon" class="button">Adicionar Invocação</button>
+        
+        <!-- Contêiner para as invocações (movido para dentro do .container) -->
+        <div id="summons"></div>
+    </div>
+    
+    <script>
+        // Variáveis para armazenar valores máximos iniciais
+        let initialMaxLife = parseInt(document.getElementById("maxLife").value) || 0;
+        let initialMaxMana = parseInt(document.getElementById("maxMana").value) || 0;
+        
+        // Função para atualizar a vida atual do personagem principal com base no dano
+        function updateLife() {
+            const maxLife = parseInt(document.getElementById("maxLife").value) || 0;
+            const damage = parseInt(document.getElementById("damage").value) || 0;
+            let currentLife = parseInt(document.getElementById("currentLife").textContent) || 0;
+            currentLife = Math.min(maxLife, currentLife - damage); // Limitar a vida atual à vida máxima
+            document.getElementById("currentLife").textContent = currentLife;
+            document.getElementById("damage").value = ""; // Limpar o campo de dano
+        }
+        
+        // Função para confirmar a cura recebida pelo personagem principal
+        function confirmHealing() {
+            const maxLife = parseInt(document.getElementById("maxLife").value) || 0;
+            const healing = parseInt(document.getElementById("healing").value) || 0;
+            let currentLife = parseInt(document.getElementById("currentLife").textContent) || 0;
+            currentLife = Math.min(maxLife, currentLife + healing); // Limitar a vida atual à vida máxima
+            document.getElementById("currentLife").textContent = currentLife;
+            document.getElementById("healing").value = ""; // Limpar o campo de cura
+        }
+        
+        // Função para atualizar a mana atual do personagem principal com base no gasto de mana
+        function updateMana() {
+            const maxMana = parseInt(document.getElementById("maxMana").value) || 0;
+            const manaSpent = parseInt(document.getElementById("manaSpent").value) || 0;
+            let currentMana = parseInt(document.getElementById("currentMana").textContent) || 0;
+            currentMana = Math.max(0, currentMana - manaSpent); // Limite a mana atual a zero ou mais
+            document.getElementById("currentMana").textContent = currentMana;
+            document.getElementById("manaSpent").value = ""; // Limpar o campo de gasto de mana
+        }
+        
+        // Função para confirmar a regeneração de mana do personagem principal
+        function confirmManaRegen() {
+            const maxMana = parseInt(document.getElementById("maxMana").value) || 0;
+            const manaRegen = parseInt(document.getElementById("manaRegen").value) || 0;
+            let currentMana = parseInt(document.getElementById("currentMana").textContent) || 0;
+            currentMana = Math.min(maxMana, currentMana + manaRegen); // Limitar a mana atual à mana máxima
+            document.getElementById("currentMana").textContent = currentMana;
+            document.getElementById("manaRegen").value = ""; // Limpar o campo de regeneração de mana
+        }
+        
+        // Adicionar event listeners aos botões do personagem principal
+        document.getElementById("decrementTurns").addEventListener("click", function() {
+            const turns = parseInt(document.getElementById("turns").textContent) || 0;
+            document.getElementById("turns").textContent = Math.max(0, turns - 1);
+        });
+        
+        document.getElementById("incrementTurns").addEventListener("click", function() {
+            const turns = parseInt(document.getElementById("turns").textContent) || 0;
+            document.getElementById("turns").textContent = turns + 1;
+        });
+        
+        document.getElementById("confirmDamage").addEventListener("click", function() {
+            updateLife();
+        });
+        
+        document.getElementById("confirmManaSpent").addEventListener("click", function() {
+            updateMana();
+        });
+        
+        document.getElementById("confirmHealing").addEventListener("click", function() {
+            confirmHealing();
+        });
+        
+        document.getElementById("confirmManaRegen").addEventListener("click", function() {
+            confirmManaRegen();
+        });
+        
+        // Variável para rastrear as invocações
+        let summonCount = 0;
+        
+        // Função para atualizar a vida, dano recebido, cura recebida, mana máxima, gasto de mana e regeneração de mana das invocações
+        function updateSummonStats(summonId) {
+            const maxLife = parseInt(document.getElementById(`${summonId}_maxLife`).value) || 0;
+            const damage = parseInt(document.getElementById(`${summonId}_damage`).value) || 0;
+            const healing = parseInt(document.getElementById(`${summonId}_healing`).value) || 0;
+            const maxMana = parseInt(document.getElementById(`${summonId}_maxMana`).value) || 0;
+            const manaSpent = parseInt(document.getElementById(`${summonId}_manaSpent`).value) || 0;
+            const manaRegen = parseInt(document.getElementById(`${summonId}_manaRegen`).value) || 0;
+            
+            // Atualizar vida atual, dano recebido, cura recebida, mana atual, gasto de mana e regeneração de mana da invocação
+            let currentLife = parseInt(document.getElementById(`${summonId}_currentLife`).textContent) || 0;
+            currentLife = Math.min(maxLife, currentLife - damage + healing); // Limitar a vida atual à vida máxima
+            document.getElementById(`${summonId}_currentLife`).textContent = currentLife;
+            document.getElementById(`${summonId}_damage`).value = ""; // Limpar o campo de dano
+            document.getElementById(`${summonId}_healing`).value = ""; // Limpar o campo de cura
+            
+            let currentMana = parseInt(document.getElementById(`${summonId}_currentMana`).textContent) || 0;
+            currentMana = Math.min(maxMana, currentMana - manaSpent + manaRegen); // Limitar a mana atual à mana máxima
+            document.getElementById(`${summonId}_currentMana`).textContent = currentMana;
+            document.getElementById(`${summonId}_manaSpent`).value = ""; // Limpar o campo de gasto de mana
+            document.getElementById(`${summonId}_manaRegen`).value = ""; // Limpar o campo de regeneração de mana
+        }
+        
+        // Função para adicionar uma invocação
+        function addSummon() {
+            const maxLife = parseInt(document.getElementById("maxLife").value) || 0;
+            const maxMana = parseInt(document.getElementById("maxMana").value) || 0;
+            const characterName = document.getElementById("characterName").value;
+            const summonId = `summon${summonCount}`;
+            summonCount++;
+            
+            const summonHTML = `
+                <div class="summon-container" id="${summonId}">
+                    <h3>Invocação ${summonCount}</h3>
+                    <button class="close-button" onclick="closeSummon('${summonId}')">X</button>
+                    <div class="header">
+                        <span class="label">Nome da Invocação:</span>
+                        <input id="${summonId}_name" type="text" placeholder="Nome da Invocação">
+                    </div>
+                    <div class="header">
+                        <span class="label">Vida Máxima:</span>
+                        <input id="${summonId}_maxLife" class="input" type="number" value="${maxLife}">
+                    </div>
+                    <div class="header">
+                        <span class="label">Vida Atual:</span>
+                        <span id="${summonId}_currentLife">${maxLife}</span>
+                    </div>
+                    <div class="header">
+                        <span class="label">Dano Recebido:</span>
+                        <input id="${summonId}_damage" class="input" type="number">
+                        <button id="${summonId}_confirmDamage" class="button">Confirmar</button>
+                    </div>
+                    <div class="header">
+                        <span class="label">Cura Recebida:</span>
+                        <input id="${summonId}_healing" class="input" type="number">
+                        <button id="${summonId}_confirmHealing" class="button">Confirmar</button>
+                    </div>
+                    <div class="header">
+                        <span class="label">Mana Máxima:</span>
+                        <input id="${summonId}_maxMana" class="input" type="number" value="${maxMana}">
+                    </div>
+                    <div class="header">
+                        <span class="label">Mana Atual:</span>
+                        <span id="${summonId}_currentMana">${maxMana}</span>
+                    </div>
+                    <div class="header">
+                        <span class="label">Gasto de Mana:</span>
+                        <input id="${summonId}_manaSpent" class="input" type="number">
+                        <button id="${summonId}_confirmManaSpent" class="button">Confirmar</button>
+                    </div>
+                    <div class="header">
+                        <span class="label">Regen de Mana:</span>
+                        <input id="${summonId}_manaRegen" class="input" type="number">
+                        <button id="${summonId}_confirmManaRegen" class="button">Confirmar</button>
+                    </div>
+                </div>
+            `;
+            
+            // Adicionar a invocação ao contêiner de invocações
+            document.getElementById("summons").insertAdjacentHTML("beforeend", summonHTML);
+            
+            // Adicionar event listeners para os botões da invocação
+            document.getElementById(`${summonId}_confirmDamage`).addEventListener("click", function() {
+                updateSummonStats(summonId);
+            });
+            
+            document.getElementById(`${summonId}_confirmManaSpent`).addEventListener("click", function() {
+                updateSummonStats(summonId);
+            });
+            
+            document.getElementById(`${summonId}_confirmHealing`).addEventListener("click", function() {
+                updateSummonStats(summonId);
+            });
+            
+            document.getElementById(`${summonId}_confirmManaRegen`).addEventListener("click", function() {
+                updateSummonStats(summonId);
+            });
+        }
+        
+        // Função para fechar uma invocação
+        function closeSummon(summonId) {
+            const summonElement = document.querySelector(`#${summonId}`);
+            summonElement.parentNode.removeChild(summonElement);
+        }
+        
+        // Adicionar event listener ao botão "Adicionar Invocação"
+        document.getElementById("addSummon").addEventListener("click", function() {
+            addSummon();
+        });
+    </script>
+</body>
+</html>
